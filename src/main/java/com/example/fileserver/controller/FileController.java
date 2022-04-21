@@ -1,6 +1,7 @@
 package com.example.fileserver.controller;
 
 import com.example.fileserver.dto.FileResponse;
+import com.example.fileserver.dto.StorageFileDto;
 import com.example.fileserver.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -35,11 +36,11 @@ public class FileController {
         return "listFiles";
     }
 
-    @GetMapping("/download/{filename:.+}")
+    @GetMapping("/download/{id}")
     @ResponseBody
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> downloadFile(@PathVariable Integer id) {
 
-        Resource resource = storageService.loadAsResource(filename);
+        Resource resource = storageService.loadAsResource(id);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
@@ -50,7 +51,8 @@ public class FileController {
     @PostMapping("/upload-file")
     @ResponseBody
     public FileResponse uploadFile(@RequestParam("file") MultipartFile file) {
-        String name = storageService.store(file);
+        StorageFileDto fileDto = storageService.storeLocaly(file);
+        String name = fileDto.getFileName();
 
         String uri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/download/")

@@ -1,7 +1,9 @@
 package com.example.fileserver.service;
 
+import com.example.fileserver.dto.StorageFileDto;
 import com.example.fileserver.exception.NotFoundException;
 import com.example.fileserver.exception.StorageException;
+import com.example.fileserver.model.StorageFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -41,7 +43,7 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public String store(MultipartFile file) {
+    public String store(MultipartFile file, Integer id) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
         try {
             if (file.isEmpty()) {
@@ -54,7 +56,7 @@ public class StorageServiceImpl implements StorageService {
                                 + filename);
             }
             try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, this.rootLocation.resolve(filename),
+                Files.copy(inputStream, this.rootLocation.resolve(id.toString()),
                         StandardCopyOption.REPLACE_EXISTING);
             }
         }
@@ -84,9 +86,10 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Resource loadAsResource(String filename) {
+    public Resource loadAsResource(Integer id) {
         try {
-            Path file = load(filename);
+            //StorageFile file = repository.get(id);
+            Path file = load(file.getFileName());
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
@@ -101,5 +104,14 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(rootLocation.toFile());
+    }
+
+    @Override
+    public StorageFileDto storeLocaly(MultipartFile file) {
+        StorageFile model = StorageFile.builder()
+                .fileName(file.getOriginalFilename()).build();
+        //repository.save(model);
+        model.setLocalPath(store(file, model.getId()));
+        return null;
     }
 }
